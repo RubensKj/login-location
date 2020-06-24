@@ -8,8 +8,8 @@ import com.rubenskj.security.loginlocation.model.Location;
 import com.rubenskj.security.loginlocation.model.Session;
 import com.rubenskj.security.loginlocation.model.SessionDetails;
 import com.rubenskj.security.loginlocation.model.UserDetailsImpl;
-import com.rubenskj.security.loginlocation.property.DbMaxMindProperty;
 import com.rubenskj.security.loginlocation.repository.ISessionRepository;
+import com.rubenskj.security.loginlocation.util.DatabaseReaderGeoIp;
 import com.rubenskj.security.loginlocation.util.ParamsKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,6 @@ import ua_parser.Client;
 import ua_parser.Parser;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
@@ -31,11 +30,11 @@ public class UuidProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(UuidProvider.class);
 
     private final ISessionRepository sessionRepository;
-    private final DbMaxMindProperty dbMaxMindProperty;
+    private final DatabaseReaderGeoIp databaseReaderGeoIp;
 
-    public UuidProvider(ISessionRepository sessionRepository, DbMaxMindProperty dbMaxMindProperty) {
+    public UuidProvider(ISessionRepository sessionRepository, DatabaseReaderGeoIp databaseReaderGeoIp) {
         this.sessionRepository = sessionRepository;
-        this.dbMaxMindProperty = dbMaxMindProperty;
+        this.databaseReaderGeoIp = databaseReaderGeoIp;
     }
 
     public String getUuidFromHeader(HttpServletRequest request) {
@@ -104,7 +103,7 @@ public class UuidProvider {
 
         try {
             InetAddress ipAddress = InetAddress.getByName(ipClient);
-            DatabaseReader databaseReader = this.getInstanceOfDatabaseReader();
+            DatabaseReader databaseReader = databaseReaderGeoIp.getInstanceDatabaseReader();
 
             CityResponse cityResponse = databaseReader.city(ipAddress);
 
@@ -113,13 +112,6 @@ public class UuidProvider {
             LOGGER.error("Cannot find city from user by ip. Client IP: {}", ipClient);
             return null;
         }
-    }
-
-    private DatabaseReader getInstanceOfDatabaseReader() throws IOException {
-        String dbLocation = this.dbMaxMindProperty.getDblocation();
-        File database = new File(dbLocation);
-
-        return new DatabaseReader.Builder(database).build();
     }
 
     public String extractIp(HttpServletRequest request) {
