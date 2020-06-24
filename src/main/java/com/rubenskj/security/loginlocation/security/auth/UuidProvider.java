@@ -1,7 +1,6 @@
 package com.rubenskj.security.loginlocation.security.auth;
 
 import com.maxmind.geoip2.DatabaseReader;
-import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 import com.rubenskj.security.loginlocation.dtos.AuthDTO;
 import com.rubenskj.security.loginlocation.exception.NotFoundException;
@@ -73,11 +72,27 @@ public class UuidProvider {
             Parser parser = new Parser();
             Client client = parser.parse(userAgent);
 
-            return new SessionDetails(client.userAgent.family, client.os.family, client.device.family);
+            return new SessionDetails(client.userAgent.family, this.returnOsFamilyWithVersion(client), this.returnDevice(client));
         } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private String returnOsFamilyWithVersion(Client client) {
+        return client.os.family + " " + client.os.major;
+    }
+
+    private String returnDevice(Client client) {
+        if (client.device.family == null) {
+            return null;
+        }
+
+        if (client.device.family.equalsIgnoreCase("Other")) {
+            return "Computer";
+        }
+
+        return client.device.family;
     }
 
     private String getUserAgentHeader(HttpServletRequest request) {

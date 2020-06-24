@@ -2,10 +2,8 @@ package com.rubenskj.security.loginlocation.controller;
 
 import com.rubenskj.security.loginlocation.dtos.ClientDTO;
 import com.rubenskj.security.loginlocation.service.ClientService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -22,5 +20,11 @@ public class ClientController {
     @PostMapping
     public ClientDTO saveClient(@Valid @RequestBody ClientDTO clientDTO) {
         return ClientDTO.of(this.clientService.saveClient(clientDTO));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('RL_ADMIN')")
+    public ClientDTO getClient(@PathVariable("id") Long id) {
+        return ClientDTO.of(this.clientService.getClientById(id));
     }
 }
